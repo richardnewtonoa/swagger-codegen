@@ -3,6 +3,66 @@
   <groupId>codegen-example</groupId>
   <artifactId>codegen-example</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+  <dependencyManagement>
+  	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-dependencies -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-dependencies</artifactId>
+		    <version>2.4.2</version>
+		    <type>pom</type>
+		    <scope>import</scope>		    
+		</dependency>	
+  	</dependencies>
+  </dependencyManagement>
+  
+  <dependencies>
+	<!-- https://mvnrepository.com/artifact/org.springframework/spring-webmvc -->
+	<dependency>
+	    <groupId>org.springframework</groupId>
+	    <artifactId>spring-webmvc</artifactId>
+	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
+	<dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-annotations</artifactId>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
+	<dependency>
+	    <groupId>com.fasterxml.jackson.core</groupId>
+	    <artifactId>jackson-databind</artifactId>
+	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
+	<dependency>
+	    <groupId>io.swagger.core.v3</groupId>
+	    <artifactId>swagger-annotations</artifactId>
+	    <version>2.1.6</version>
+	</dependency>
+	
+	<!-- https://mvnrepository.com/artifact/jakarta.validation/jakarta.validation-api -->
+	<dependency>
+	    <groupId>jakarta.validation</groupId>
+	    <artifactId>jakarta.validation-api</artifactId>
+	</dependency>
+
+	<!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
+	<dependency>
+	    <groupId>javax.servlet</groupId>
+	    <artifactId>javax.servlet-api</artifactId>
+	    <scope>provided</scope>
+	</dependency>
+
+	<!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+	<dependency>
+	    <groupId>org.slf4j</groupId>
+	    <artifactId>slf4j-api</artifactId>
+	</dependency>
+
+  </dependencies>
+  
   <build>
     <plugins>
       <plugin>
@@ -20,6 +80,7 @@
 		    <version>3.0.24</version>
 		    <executions>
 		        <execution>
+		        	<phase>generate-sources</phase>
 		            <goals>
 		                <goal>generate</goal>
 		            </goals>
@@ -37,13 +98,41 @@
 		                <generateModelDocumentation>true</generateModelDocumentation>
 		                <generateSupportingFiles>false</generateSupportingFiles>
 		                <skip>false</skip>
+		                <configHelp>false</configHelp> <!-- set to true to show spring generation options -->
 		                <configOptions>
 		                   <sourceFolder>src/gen</sourceFolder>
+		                   <delegatePattern>true</delegatePattern>
+		                   <java8>true</java8>
+		                   <dateLibrary>java8</dateLibrary>
+		                   <library>spring-boot</library>
 		                </configOptions>
 		            </configuration>
 		        </execution>
 		    </executions>
-		</plugin>      
+		</plugin>    
+		
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <id>copy-swagger-src</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/src/main/java</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>${project.build.directory}/generated-sources/swagger/src/gen</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+        </executions>
+      </plugin>		  
     </plugins>
     
     <pluginManagement>
