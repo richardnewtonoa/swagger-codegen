@@ -1,0 +1,353 @@
+---
+openapi: 3.0.1
+info:
+  title: Operative On The Way
+  description: API allowing customer facing maps to be shown, that show the position of an operative relative the the customer location, with an ETA.
+  contact:
+    email: richard.newton@oneadvanced.com
+  version: v2.0.0
+servers:
+- url: http://kir-docker.kirona.com:1690/sprintoow
+  description: Generated server url
+paths:
+  /tracker/{organisationId}/configuration:
+    get:
+      tags:
+      - configuration-controller
+      summary: Get Mobile App Configuration
+      description: Get the tracking application configuration for the specfied organisation.
+      operationId: getConfiguration
+      parameters:
+      - name: organisationId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: licenseKey
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "400":
+          description: Bad Request - invalid or insufficient data supplied
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "401":
+          description: Unauthorised - invalid license key supplied
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        "500":
+          description: Internal Error
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+  /internal/tracker/{organisationId}/track:
+    post:
+      tags:
+      - tracking-controller
+      summary: start tracking a job
+      description: Start tracking a specific job, sending a tracking page link (via e-mail or SMS) to the customer
+      operationId: start
+      parameters:
+      - name: organisationId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            '*/*':
+              schema:
+                type: string
+        "400":
+          description: Bad Request - invalid or insufficient data supplied
+          content:
+            '*/*':
+              schema:
+                type: string
+        "500":
+          description: Internal Error
+          content:
+            '*/*':
+              schema:
+                type: string
+  /internal/tracker/{organisationId}/track/{externalId}:
+    delete:
+      tags:
+      - tracking-controller
+      summary: Stop tracking a job
+      description: Stop tracking a specific job. Any tracking page link for this job will become invalid.
+      operationId: stop
+      parameters:
+      - name: organisationId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: externalId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            '*/*':
+              schema:
+                type: string
+        "400":
+          description: Bad Request - invalid or insufficient data supplied
+          content:
+            '*/*':
+              schema:
+                type: string
+        "500":
+          description: Internal Error
+          content:
+            '*/*':
+              schema:
+                type: string
+  /internal/tracker/{organisationId}/track/{externalId}/status:
+    get:
+      tags:
+      - tracking-controller
+      summary: Check the tracking status of a job
+      description: Check the tracking status of a particular job. Result will either be STARTED or NOTSTARTED.
+      operationId: status
+      parameters:
+      - name: organisationId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: externalId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            '*/*':
+              schema:
+                type: string
+        "400":
+          description: Bad Request - invalid or insufficient data supplied
+          content:
+            '*/*':
+              schema:
+                type: string
+        "500":
+          description: Internal Error
+          content:
+            '*/*':
+              schema:
+                type: string
+  /tracker/{organisationId}/location:
+    post:
+      tags:
+      - location-update-controller
+      summary: Update operative location
+      description: Update current position for a specific operative in a specific organisation.
+      operationId: update
+      parameters:
+      - name: organisationId
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: licenseKey
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationUpdateRequest'
+      responses:
+        "200":
+          description: Success
+          content:
+            '*/*':
+              schema:
+                type: string
+        "400":
+          description: Bad Request - invalid or insufficient data supplied
+          content:
+            '*/*':
+              schema:
+                type: string
+        "401":
+          description: Unauthorised - invalid license key supplied
+          content:
+            '*/*':
+              schema:
+                type: string
+        "500":
+          description: Internal Error
+          content:
+            '*/*':
+              schema:
+                type: string
+components:
+  schemas:
+    LatLng:
+      required:
+      - latitude
+      - longitude
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+      description: What is the location that the work should take place.
+    StartRequest:
+      required:
+      - externalId
+      - jobCoordinate
+      - operativeId
+      - operativeName
+      type: object
+      properties:
+        externalId:
+          type: string
+        jobDescription:
+          type: string
+        jobCoordinate:
+          $ref: '#/components/schemas/LatLng'
+        jobSlotStart:
+          type: string
+          description: Slot Start Time. Must be supplied together with jobSlotEnd.
+          format: HH:mm
+          example: 13:45
+        jobSlotEnd:
+          type: string
+          description: Slot End Time. Must be supplied together with jobSlotStart.
+          format: HH:mm
+          example: 13:45
+        jobSlotName:
+          type: string
+        trackingExpiryMinutes:
+          type: integer
+          description: Override the default expiry timer for this tracking request. Expires the tracking link X minutes after it is created, even when no stop is received.
+          format: int32
+        operativeId:
+          type: string
+        operativeName:
+          type: string
+        operativeContactNumber:
+          type: string
+          description: Contact phone number for the operative. Include if you want an option to call the operative on the tracking page.
+        doNotTrackMinutes:
+          type: integer
+          description: Do not show any operative location having a timestamp before the tracking start time plus this many minutes.
+          format: int64
+        customerNotifyEmailAddress:
+          type: string
+          description: An e-mail address to send the tracking link to the customer. Either this OR customerNotifySMSNumber must be supplied.
+        customerNotifySMSNumber:
+          type: string
+          description: An phone number to send the tracking link SMS to the customer. Either this OR customerNotifyEmailAddress must be supplied.
+        extraData:
+          type: object
+          additionalProperties:
+            type: string
+            description: Additional data related to the job. Can be refered to if you use custom e-mail / SMS / tracking page templates. Add an 'avatarUrl' value to include an operative image on the tracking page.
+          description: Additional data related to the job. Can be refered to if you use custom e-mail / SMS / tracking page templates. Add an 'avatarUrl' value to include an operative image on the tracking page.
+    LatLngAccuracy:
+      required:
+      - latitude
+      - longitude
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        accuracy:
+          type: integer
+          description: Optionally specify accuracy of the coordinate as an integer value
+          format: int32
+          example: 16
+      description: Details of the coordinate and it's accuracy.
+    Location:
+      required:
+      - coords
+      - timestamp
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: Optionally specify the unique ID of the device sending the coordinate
+        timestamp:
+          type: string
+          description: The time that the operative was at the specified location.
+          format: date-time
+        coords:
+          $ref: '#/components/schemas/LatLngAccuracy'
+      description: Details of the location update.
+    LocationUpdateRequest:
+      required:
+      - location
+      - operativeId
+      type: object
+      properties:
+        location:
+          $ref: '#/components/schemas/Location'
+        operativeId:
+          type: string
+          description: Id of the operative to update the location of.
